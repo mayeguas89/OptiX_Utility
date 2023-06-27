@@ -67,6 +67,8 @@ namespace Shared {
         unsigned int visualizationMode : 2;
         unsigned int sampleIndex : 8;
         unsigned int drawBaseEdges : 1;
+        float opacityThreshold{0.1f};
+
     };
 
 

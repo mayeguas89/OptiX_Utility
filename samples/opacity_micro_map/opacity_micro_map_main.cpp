@@ -65,7 +65,7 @@ int32_t main(int32_t argc, const char* argv[]) try {
     bool takeScreenShot = false;
     bool useOMM = true;
     auto visualizationMode = Shared::VisualizationMode_Final;
-    shared::OMMFormat maxOmmSubDivLevel = shared::OMMFormat_Level4;
+    shared::OMMFormat maxOmmSubDivLevel = shared::OMMFormat_Level12;
     int32_t ommSubdivLevelBias = 0;
     bool useOmmIndexBuffer = true;
 
@@ -330,7 +330,7 @@ int32_t main(int32_t argc, const char* argv[]) try {
 
     Geometry alphaTestGeom;
     {
-        std::filesystem::path filePath = R"(../../data/transparent_test.obj)";
+        std::filesystem::path filePath = R"(../../data/plane.obj)";
         std::filesystem::path fileDir = filePath.parent_path();
 
         std::vector<obj::Vertex> vertices;
@@ -418,7 +418,7 @@ int32_t main(int32_t argc, const char* argv[]) try {
                     group.triangleBuffer.getCUdeviceptr(), sizeof(Shared::Triangle), numTriangles,
                     group.texObj,
                     make_uint2(group.texArray.getWidth(), group.texArray.getHeight()), 4, 3,
-                    shared::OMMFormat_Level0, maxOmmSubDivLevel, ommSubdivLevelBias,
+                    shared::OMMFormat_Level7, maxOmmSubDivLevel, ommSubdivLevelBias,
                     useOmmIndexBuffer, 1 << static_cast<uint32_t>(ommIndexSize),
                     scratchMemForOMM.getCUdeviceptr(), scratchMemForOMM.sizeInBytes(),
                     &ommContext);
@@ -652,13 +652,14 @@ int32_t main(int32_t argc, const char* argv[]) try {
     float lightDirPhi = -16;
     float lightDirTheta = 60;
     float lightStrengthInLog10 = 0.8f;
+    float opacityThr = 0.003f;
 
     Shared::PipelineLaunchParameters plp;
     plp.travHandle = travHandle;
     plp.imageSize = int2(initWindowContentWidth, initWindowContentHeight);
     plp.camera.fovY = 50 * pi_v<float> / 180;
     plp.camera.aspect = static_cast<float>(initWindowContentWidth) / initWindowContentHeight;
-    plp.envRadiance = float3(0.10f, 0.13f, 0.9f);
+    plp.envRadiance = float3(0.1f, 0.1f, 0.1f);
 
     pipeline.setScene(scene);
     pipeline.setHitGroupShaderBindingTable(hitGroupSBT, hitGroupSBT.getMappedPointer());
@@ -758,12 +759,14 @@ int32_t main(int32_t argc, const char* argv[]) try {
             const float oldStrength = lightStrengthInLog10;
             const float oldPhi = lightDirPhi;
             const float oldTheta = lightDirTheta;
+            const float oldOpacity = opacityThr;
             ImGui::SliderFloat("Light Strength", &lightStrengthInLog10, -2, 2);
             ImGui::SliderFloat("Light Phi", &lightDirPhi, -180, 180);
             ImGui::SliderFloat("Light Theta", &lightDirTheta, 0, 90);
+            ImGui::SliderFloat("Opacity Threshold", &opacityThr, 0.00001f, 1.f);
             lightParamChanged =
                 lightStrengthInLog10 != oldStrength
-                || lightDirPhi != oldPhi || lightDirTheta != oldTheta;
+                || lightDirPhi != oldPhi || lightDirTheta != oldTheta || opacityThr != oldOpacity;
 
             ImGui::Separator();
 
@@ -815,7 +818,8 @@ int32_t main(int32_t argc, const char* argv[]) try {
         // Render
         {
             curGPUTimer.render.start(curStream);
-
+            
+            plp.opacityThreshold = opacityThr;
             plp.lightDirection = fromPolarYUp(lightDirPhi * pi_v<float> / 180, lightDirTheta * pi_v<float> / 180);
             plp.lightRadiance = float3(std::pow(10.0f, lightStrengthInLog10));
             plp.colorAccumBuffer = outputBufferSurfaceHolder.getNext();

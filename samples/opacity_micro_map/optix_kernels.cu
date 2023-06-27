@@ -64,11 +64,11 @@ CUDA_DEVICE_FUNCTION CUDA_INLINE float fetchAlpha(
     float b0 = 1 - (b1 + b2);
     float2 texCoord = b0 * v0.texCoord + b1 * v1.texCoord + b2 * v2.texCoord;
     float4 texValue = tex2DLod<float4>(geomInst.texture, texCoord.x, texCoord.y, 0.0f);
-    return texValue.w;
+    return (texValue.x+texValue.y+texValue.z)*0.3333f;
 }
 
 CUDA_DEVICE_FUNCTION CUDA_INLINE float isTransparent(float alpha) {
-    return alpha < 0.5f;
+    return alpha < plp.opacityThreshold;
 }
 
 CUDA_DEVICE_KERNEL void RT_RG_NAME(raygen)() {

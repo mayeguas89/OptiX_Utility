@@ -84,6 +84,7 @@ source_group(
     "${CMAKE_SOURCE_DIR}/samples/common/micro_map/(omm|micro_map)_.*\.(h|hpp|c|cpp|cu)$")
 
 list(APPEND CUDA_NVCC_FLAGS "$<$<CONFIG:Debug>:-G>")
+list(APPEND CUDA_NVCC_FLAGS $<$<COMPILE_LANGUAGE:CUDA>:--std=c++17>)
 
 add_executable(
     "${TARGET_NAME}"

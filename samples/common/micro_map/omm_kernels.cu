@@ -24,6 +24,7 @@ CUDA_DEVICE_FUNCTION CUDA_INLINE float fetchAlpha(
     if (numChannels == 4) {
         alias.f4 = tex2DLod<float4>(texture, texCoord.x, texCoord.y, 0.0f);
         alpha = alias.a[alphaChannelIdx];
+        alpha = (alias.f4.x + alias.f4.y + alias.f4.z)*0.3333333f;
     }
     else if (numChannels == 2) {
         alias.f2 = tex2DLod<float2>(texture, texCoord.x, texCoord.y, 0.0f);
@@ -36,7 +37,8 @@ CUDA_DEVICE_FUNCTION CUDA_INLINE float fetchAlpha(
 }
 
 CUDA_DEVICE_FUNCTION CUDA_INLINE bool isTransparent(float alpha) {
-    return alpha < 0.5f;
+    return alpha < 0.003f;
+    // return alpha < 0.5f;
 }
 
 
